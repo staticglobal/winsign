@@ -252,7 +252,6 @@ def write_signature(infile, outfile, sig, certs, cafile=None, timestampfile=None
     with tempfile.TemporaryDirectory() as d:
         d = Path(d)
         sigfile = d / "sigfile"
-        sigfile = "/tmp/bholbrook.sig"
         with open(sigfile, "wb") as sf:
             sf.write(sig)
 
