@@ -90,12 +90,6 @@ async def sign_file(
     outfile = Path(outfile)
 
     is_msix = winsign.makemsix.is_msixfile(infile)
-    if not is_msix and (cafile is None or not Path(cafile).is_file()):
-        log.error(
-            "CAfile is required while writing signatures for non msix files, expected path to file, found '%s'",
-            cafile,
-        )
-        return False
 
     try:
         log.debug("Generating dummy signature")
