@@ -231,14 +231,10 @@ def get_dummy_signature(infile, digest_algo, url=None, comment=None, crosscert=N
         )
         sig = d / "signature"
         extract_signature(dest, sig)
-        if is_pefile(infile):
-            pefile_cert = certificate.parse(sig.read_bytes())
-            return pefile_cert.data
-        else:
-            return sig.read_bytes()
+        return sig.read_bytes()
 
 
-def write_signature(infile, outfile, sig, certs, cafile, timestampfile):
+def write_signature(infile, outfile, sig, certs, cafile=None, timestampfile=None):
     """Writes a signature into a file.
 
     Args:
@@ -253,34 +249,25 @@ def write_signature(infile, outfile, sig, certs, cafile, timestampfile):
         Same as `winsign.sign.osslsigncode`_
 
     """
-    # PE files need their signatures encapsulated
-    if is_pefile(infile):
-        padlen = (8 - len(sig) % 8) % 8
-        sig += b"\x00" * padlen
-        cert = certificate.build(
-            {"size": len(sig) + 8, "revision": "REV2", "certtype": "PKCS7", "data": sig}
-        )
-    else:
-        cert = sig
-
     with tempfile.TemporaryDirectory() as d:
         d = Path(d)
         sigfile = d / "sigfile"
+        sigfile = "/tmp/bholbrook.sig"
         with open(sigfile, "wb") as sf:
-            sf.write(cert)
+            sf.write(sig)
 
         cmd = [
             "attach-signature",
             "-sigin",
             sigfile,
-            "-CAfile",
-            cafile,
-            "-untrusted",
-            timestampfile,
             "-in",
             infile,
             "-out",
             outfile,
         ]
+        if cafile:
+            cmd += ["-CAfile", cafile]
+        if timestampfile:
+            cmd += ["-TSA-CAfile", timestampfile]
 
         osslsigncode(cmd)
